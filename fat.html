@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>30-Day Fat Loss Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .cardio-card {
+            border-left: 4px solid;
+        }
+        
+        .treadmill { border-color: #3b82f6; }
+        .rope { border-color: #10b981; }
+        .cycling { border-color: #f59e0b; }
+        .swimming { border-color: #6366f1; }
+        .other { border-color: #8b5cf6; }
+        
+        .dark .dark\:bg-gray-800 {
+            background-color: #1e293b;
+        }
+        
+        .dark .dark\:text-white {
+            color: #f8fafc;
+        }
+        
+        .dark .dark\:bg-gray-700 {
+            background-color: #334155;
+        }
+        
+        .dark .dark\:border-gray-600 {
+            border-color: #475569;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 transition-colors duration-200">
+    <div class="min-h-screen">
+        <!-- Header -->
+        <header class="bg-blue-600 text-white shadow-lg">
+            <div class="container mx-auto px-4 py-6 flex justify-between items-center">
+                <h1 class="text-2xl md:text-3xl font-bold">30-Day Fat Loss Tracker</h1>
+                <div class="flex items-center space-x-4">
+                    <button id="darkModeToggle" class="p-2 rounded-full bg-blue-700 hover:bg-blue-800 transition-colors">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                    <button id="exportBtn" class="p-2 rounded-full bg-blue-700 hover:bg-blue-800 transition-colors" title="Export Data">
+                        <i class="fas fa-file-export"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <main class="container mx-auto px-4 py-8">
+            <!-- Dashboard Summary -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-white p-6 rounded-lg shadow-md flex items-center dark:bg-gray-800 dark:text-white">
+                    <div class="mr-4 p-3 bg-blue-100 rounded-full text-blue-600 dark:bg-blue-900 dark:text-blue-300">
+                        <i class="fas fa-fire-alt text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 text-sm dark:text-gray-300">Total Calories Burned</p>
+                        <p id="totalCalories" class="text-2xl font-bold">0 kcal</p>
+                    </div>
+                </div>
+                
+                <div class="bg-white p-6 rounded-lg shadow-md flex items-center dark:bg-gray-800 dark:text-white">
+                    <div class="mr-4 p-3 bg-green-100 rounded-full text-green-600 dark:bg-green-900 dark:text-green-300">
+                        <i class="fas fa-weight text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 text-sm dark:text-gray-300">Weight Change</p>
+                        <p id="weightChange" class="text-2xl font-bold">0 lbs</p>
+                    </div>
+                </div>
+                
+                <div class="bg-white p-6 rounded-lg shadow-md flex items-center dark:bg-gray-800 dark:text-white">
+                    <div class="mr-4 p-3 bg-purple-100 rounded-full text-purple-600 dark:bg-purple-900 dark:text-purple-300">
+                        <i class="fas fa-running text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 text-sm dark:text-gray-300">Cardio Streak</p>
+                        <p id="streakCount" class="text-2xl font-bold">0 days</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input Form -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-8 dark:bg-gray-800 dark:text-white">
+                <h2 class="text-xl font-semibold mb-4">Today's Progress</h2>
+                
+                <form id="trackerForm" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <!-- Cardio Input -->
+                        <div>
+                            <label for="cardioType" class="block text-sm font-medium mb-1 dark:text-gray-300">Cardio Activity</label>
+                            <select id="cardioType" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                <option value="">Select activity</option>
+                                <option value="Treadmill">Treadmill</option>
+                                <option value="Rope">Jump Rope</option>
+                                <option value="Cycling">Cycling</option>
+                                <option value="Swimming">Swimming</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label for="cardioDuration" class="block text-sm font-medium mb-1 dark:text-gray-300">Duration (minutes)</label>
+                            <input type="number" id="cardioDuration" min="1" max="240" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="e.g. 30">
+                        </div>
+                        
+                        <div>
+                            <label for="caloriesBurned" class="block text-sm font-medium mb-1 dark:text-gray-300">Calories Burned</label>
+                            <input type="number" id="caloriesBurned" readonly class="w-full p-3 border border-gray-300 rounded-lg bg-gray-100 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label for="meal" class="block text-sm font-medium mb-1 dark:text-gray-300">OMAD Meal Description</label>
+                        <textarea id="meal" rows="2" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Describe your one meal today (include ingredients)"></textarea>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="weight" class="block text-sm font-medium mb-1 dark:text-gray-300">Today's Weight (lbs)</label>
+                            <input type="number" id="weight" step="0.1" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="e.g. 165.5">
+                        </div>
+                        
+                        <div class="flex items-end">
+                            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors">
+                                <i class="fas fa-plus mr-2"></i> Add Today's Log
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Suggestions -->
+            <div id="suggestions" class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-8 rounded-r-lg dark:bg-yellow-900 dark:border-yellow-600">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-lightbulb text-yellow-500 dark:text-yellow-300 text-xl mt-1"></i>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium text-yellow-800 dark:text-yellow-200">Today's Suggestions</h3>
+                        <div id="suggestionContent" class="mt-2 text-sm text-yellow-700 dark:text-yellow-300">
+                            <p>Complete today's log to get personalized suggestions.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Weight Graph -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-8 dark:bg-gray-800">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold dark:text-white">Weight Progression</h2>
+                    <div class="flex space-x-2">
+                        <button id="weekBtn" class="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-full dark:bg-blue-900 dark:text-blue-300">7 Days</button>
+                        <button id="monthBtn" class="px-3 py-1 text-sm bg-blue-600 text-white rounded-full">30 Days</button>
+                    </div>
+                </div>
+                <div class="h-80">
+                    <canvas id="weightChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Daily Logs -->
+            <div class="bg-white rounded-lg shadow-md p-6 dark:bg-gray-800">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold dark:text-white">Daily Logs</h2>
+                    <button id="clearAllBtn" class="text-sm text-red-500 hover:text-red-700 dark:hover:text-red-400">
+                        <i class="fas fa-trash-alt mr-1"></i> Clear All
+                    </button>
+                </div>
+                
+                <div id="logsContainer" class="space-y-4">
+                    <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+                        <i class="fas fa-clipboard-list text-4xl mb-2"></i>
+                        <p>No logs yet. Add your first entry above!</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize dark mode
+            const darkModeToggle = document.getElementById('darkModeToggle');
+            const html = document.documentElement;
+            
+            // Check for saved theme preference
+            if (localStorage.getItem('darkMode') === 'true') {
+                html.classList.add('dark');
+                darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+            }
+            
+            // Toggle dark mode
+            darkModeToggle.addEventListener('click', () => {
+                html.classList.toggle('dark');
+                const isDark = html.classList.contains('dark');
+                localStorage.setItem('darkMode', isDark);
+                darkModeToggle.innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+            });
+            
+            // Cardio calorie rates (kcal per minute)
+            const cardioRates = {
+                'Treadmill': 10,
+                'Rope': 12,
+                'Cycling': 8,
+                'Swimming': 11,
+                'Other': 7
+            };
+            
+            // DOM elements
+            const trackerForm = document.getElementById('trackerForm');
+            const cardioType = document.getElementById('cardioType');
+            const cardioDuration = document.getElementById('cardioDuration');
+            const caloriesBurned = document.getElementById('caloriesBurned');
+            const meal = document.getElementById('meal');
+            const weight = document.getElementById('weight');
+            const logsContainer = document.getElementById('logsContainer');
+            const suggestionContent = document.getElementById('suggestionContent');
+            const totalCaloriesEl = document.getElementById('totalCalories');
+            const weightChangeEl = document.getElementById('weightChange');
+            const streakCountEl = document.getElementById('streakCount');
+            const exportBtn = document.getElementById('exportBtn');
+            const clearAllBtn = document.getElementById('clearAllBtn');
+            const weekBtn = document.getElementById('weekBtn');
+            const monthBtn = document.getElementById('monthBtn');
+            
+            // Chart variables
+            let weightChart;
+            let chartDaysToShow = 30;
+            
+            // Calculate calories when cardio type or duration changes
+            cardioType.addEventListener('change', calculateCalories);
+            cardioDuration.addEventListener('input', calculateCalories);
+            
+            function calculateCalories() {
+                const type = cardioType.value;
+                const duration = parseInt(cardioDuration.value) || 0;
+                
+                if (type && duration > 0) {
+                    const rate = cardioRates[type] || 0;
+                    const calories = rate * duration;
+                    caloriesBurned.value = calories;
+                } else {
+                    caloriesBurned.value = '';
+                }
+            }
+            
+            // Form submission
+            trackerForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const today = new Date();
+                const dateStr = today.toISOString().split('T')[0];
+                const formattedDate = formatDate(today);
+                
+                const logEntry = {
+                    date: dateStr,
+                    formattedDate: formattedDate,
+                    cardioType: cardioType.value,
+                    cardioDuration: parseInt(cardioDuration.value) || 0,
+                    caloriesBurned: parseInt(caloriesBurned.value) || 0,
+                    meal: meal.value,
+                    weight: parseFloat(weight.value) || 0
+                };
+                
+                // Save to localStorage
+                saveLogEntry(logEntry);
+                
+                // Update UI
+                updateLogsDisplay();
+                updateDashboard();
+                generateSuggestions(logEntry);
+                
+                // Reset form
+                trackerForm.reset();
+                caloriesBurned.value = '';
+            });
+            
+            function formatDate(date) {
+                const options = { weekday: 'short', month: 'short', day: 'numeric' };
+                return date.toLocaleDateString('en-US', options);
+            }
+            
+            function saveLogEntry(entry) {
+                let logs = JSON.parse(localStorage.getItem('fatLossLogs')) || [];
+                
+                // Check if log already exists for today
+                const existingIndex = logs.findIndex(log => log.date === entry.date);
+                
+                if (existingIndex !== -1) {
+                    // Update existing entry
+                    logs[existingIndex] = entry;
+                } else {
+                    // Add new entry
+                    logs.push(entry);
+                }
+                
+                // Sort by date (newest first)
+                logs.sort((a, b) => new Date(b.date) - new Date(a.date));
+                
+                localStorage.setItem('fatLossLogs', JSON.stringify(logs));
+            }
+            
+            function updateLogsDisplay() {
+                const logs = JSON.parse(localStorage.getItem('fatLossLogs')) || [];
+                
+                if (logs.length === 0) {
+                    logsContainer.innerHTML = `
+                        <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+                            <i class="fas fa-clipboard-list text-4xl mb-2"></i>
+                            <p>No logs yet. Add your first entry above!</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                let html = '';
+                
+                logs.forEach(log => {
+                    const cardioClass = log.cardioType ? log.cardioType.toLowerCase().replace(' ', '-') : 'other';
+                    
+                    html += `
+                        <div class="bg-white dark:bg-gray-700 rounded-lg shadow-sm overflow-hidden fade-in cardio-card ${cardioClass}">
+                            <div class="p-4">
+                                <div class="flex justify-between items-start mb-2">
+                                    <h3 class="font-medium text-gray-900 dark:text-white">${log.formattedDate}</h3>
+                                    <span class="text-sm font-semibold ${getWeightChangeClass(log)}">${log.weight > 0 ? log.weight + ' lbs' : ''}</span>
+                                </div>
+                                
+                                ${log.cardioType ? `
+                                <div class="flex items-center text-sm text-gray-600 dark:text-gray-300 mb-2">
+                                    <i class="fas fa-running mr-2"></i>
+                                    <span>${log.cardioType} for ${log.cardioDuration} minutes</span>
+                                    <span class="mx-2">•</span>
+                                    <span class="font-medium">${log.caloriesBurned} kcal</span>
+                                </div>
+                                ` : ''}
+                                
+                                ${log.meal ? `
+                                <div class="text-sm text-gray-600 dark:text-gray-300 mb-2">
+                                    <i class="fas fa-utensils mr-2"></i>
+                                    <span class="font-medium">Meal:</span> ${log.meal}
+                                </div>
+                                ` : ''}
+                                
+                                <div class="flex justify-end">
+                                    <button class="text-red-500 hover:text-red-700 text-sm dark:hover:text-red-400 delete-btn" data-date="${log.date}">
+                                        <i class="fas fa-trash-alt mr-1"></i> Delete
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                logsContainer.innerHTML = html;
+                
+                // Add event listeners to delete buttons
+                document.querySelectorAll('.delete-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const dateToDelete = this.getAttribute('data-date');
+                        deleteLogEntry(dateToDelete);
+                    });
+                });
+                
+                // Update chart
+                updateWeightChart();
+            }
+            
+            function getWeightChangeClass(log) {
+                const logs = JSON.parse(localStorage.getItem('fatLossLogs')) || [];
+                const currentIndex = logs.findIndex(l => l.date === log.date);
+                
+                if (currentIndex === -1 || currentIndex === logs.length - 1) return 'text-gray-600 dark:text-gray-300';
+                
+                const prevLog = logs[currentIndex + 1];
+                if (!prevLog || !prevLog.weight) return 'text-gray-600 dark:text-gray-300';
+                
+                const change = log.weight - prevLog.weight;
+                
+                if (change < 0) return 'text-green-600 dark:text-green-400'; // Weight loss
+                if (change > 0) return 'text-red-600 dark:text-red-400';     // Weight gain
+                return 'text-gray-600 dark:text-gray-300';                   // No change
+            }
+            
+            function deleteLogEntry(date) {
+                let logs = JSON.parse(localStorage.getItem('fatLossLogs')) || [];
+                logs = logs.filter(log => log.date !== date);
+                localStorage.setItem('fatLossLogs', JSON.stringify(logs));
+                updateLogsDisplay();
+                updateDashboard();
+                updateWeightChart();
+            }
+            
+            function updateDashboard() {
+                const logs = JSON.parse(localStorage.getItem('fatLossLogs')) || [];
+                
+                // Total calories burned
+                const totalCalories = logs.reduce((sum, log) => sum + (log.caloriesBurned || 0), 0);
+                totalCaloriesEl.textContent = `${totalCalories} kcal`;
+                
+                // Weight change
+                if (logs.length >= 2) {
+                    const firstWeight = logs[logs.length - 1].weight;
+                    const lastWeight = logs[0].weight;
+                    const change = (lastWeight - firstWeight).toFixed(1);
+                    
+                    if (change < 0) {
+                        weightChangeEl.innerHTML = `<span class="text-green-600 dark:text-green-400">${Math.abs(change)} lbs ↓</span>`;
+                    } else if (change > 0) {
+                        weightChangeEl.innerHTML = `<span class="text-red-600 dark:text-red-400">${Math.abs(change)} lbs ↑</span>`;
+                    } else {
+                        weightChangeEl.textContent = `0 lbs`;
+                    }
+                } else {
+                    weightChangeEl.textContent = `0 lbs`;
+                }
+                
+                // Streak count (consecutive days with cardio)
+                let streak = 0;
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                
+                for (let i = 0; i < logs.length; i++) {
+                    const logDate = new Date(logs[i].date);
+                    logDate.setHours(0, 0, 0, 0);
+                    
+                    // Check if log is from today or yesterday (for streak)
+                    const dayDiff = Math.floor((today - logDate) / (1000 * 60 * 60 * 24));
+                    
+                    if (dayDiff !== i) break; // Gap in days, streak broken
+                    if (logs[i].caloriesBurned > 0) streak++;
+                    else break; // No cardio on this day, streak broken
+                }
+                
+                streakCountEl.textContent = `${streak} days`;
+            }
+            
+            function generateSuggestions(logEntry) {
+                let suggestions = [];
+                
+                // Cardio suggestions
+                if (logEntry.caloriesBurned < 200) {
+                    suggestions.push("Try to burn at least 200 kcal through cardio today for better results.");
+                }
+                
+                // Meal suggestions
+                if (logEntry.meal) {
+                    const mealLower = logEntry.meal.toLowerCase();
+                    const proteinKeywords = ['chicken', 'beef', 'fish', 'egg', 'protein', 'meat', 'tofu', 'turkey', 'pork'];
+                    const hasProtein = proteinKeywords.some(keyword => mealLower.includes(keyword));
+                    
+                    if (!hasProtein) {
+                        suggestions.push("Your meal seems low in protein. Consider adding chicken, beef, fish, or other protein sources.");
+                    }
+                    
+                    if (mealLower.includes('sugar') || mealLower.includes('sweet') || mealLower.includes('dessert')) {
+                        suggestions.push("Watch out for sugary foods in your OMAD - they can hinder fat loss.");
+                    }
+                }
+                
+                // Weight suggestions
+                const logs = JSON.parse(localStorage.getItem('fatLossLogs')) || [];
+                if (logs.length >= 2) {
+                    const prevLog = logs[1]; // Previous log (logs are sorted newest first)
+                    const weightChange = logEntry.weight - prevLog.weight;
+                    
+                    if (weightChange > 1) {
+                        suggestions.push("Your weight increased significantly. Review your meals and cardio routine.");
+                    } else if (weightChange < -1) {
+                        suggestions.push("Great progress! Your weight decreased significantly. Keep it up!");
+                    }
+                }
+                
+                // Default suggestion if none apply
+                if (suggestions.length === 0) {
+                    suggestions.push("You're on track! Keep following your routine for best results.");
+                }
+                
+                // Display suggestions
+                suggestionContent.innerHTML = suggestions.map(s => `<p class="mb-1">• ${s}</p>`).join('');
+            }
+            
+            function updateWeightChart() {
+                const logs = JSON.parse(localStorage.getItem('fatLossLogs')) || [];
+                
+                // Prepare data for chart
+                const chartData = logs
+                    .slice() // Create a copy
+                    .sort((a, b) => new Date(a.date) - new Date(b.date)) // Sort by date ascending
+                    .slice(-chartDaysToShow); // Get last X days
+                
+                const labels = chartData.map(log => {
+                    const date = new Date(log.date);
+                    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                });
+                
+                const weights = chartData.map(log => log.weight);
+                
+                // Get first and last weights for min/max
+                const validWeights = weights.filter(w => w > 0);
+                const minWeight = validWeights.length > 0 ? Math.min(...validWeights) - 5 : 0;
+                const maxWeight = validWeights.length > 0 ? Math.max(...validWeights) + 5 : 0;
+                
+                // Create or update chart
+                const ctx = document.getElementById('weightChart').getContext('2d');
+                
+                if (weightChart) {
+                    weightChart.data.labels = labels;
+                    weightChart.data.datasets[0].data = weights;
+                    weightChart.options.scales.y.min = minWeight;
+                    weightChart.options.scales.y.max = maxWeight;
+                    weightChart.update();
+                } else {
+                    weightChart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: 'Weight (lbs)',
+                                data: weights,
+                                borderColor: '#3b82f6',
+                                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                borderWidth: 2,
+                                pointBackgroundColor: '#3b82f6',
+                                pointRadius: 4,
+                                pointHoverRadius: 6,
+                                tension: 0.3,
+                                fill: true
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    display: false
+                                },
+                                tooltip: {
+                                    backgroundColor: '#1e293b',
+                                    titleFont: {
+                                        size: 14
+                                    },
+                                    bodyFont: {
+                                        size: 14
+                                    },
+                                    callbacks: {
+                                        label: function(context) {
+                                            return `Weight: ${context.parsed.y} lbs`;
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    grid: {
+                                        display: false
+                                    },
+                                    ticks: {
+                                        color: '#64748b'
+                                    }
+                                },
+                                y: {
+                                    min: minWeight,
+                                    max: maxWeight,
+                                    ticks: {
+                                        color: '#64748b',
+                                        callback: function(value) {
+                                            return value + ' lbs';
+                                        }
+                                    },
+                                    grid: {
+                                        color: '#e2e8f0',
+                                        drawBorder: false
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+            
+            // Export data to CSV
+            exportBtn.addEventListener('click', function() {
+                const logs = JSON.parse(localStorage.getItem('fatLossLogs')) || [];
+                
+                if (logs.length === 0) {
+                    alert('No data to export!');
+                    return;
+                }
+                
+                // Create CSV content
+                let csv = 'Date,Cardio Type,Duration (min),Calories Burned,Meal,Weight (lbs)\n';
+                
+                logs.forEach(log => {
+                    csv += `"${log.date}","${log.cardioType || ''}",${log.cardioDuration},${log.caloriesBurned},"${log.meal || ''}",${log.weight || ''}\n`;
+                });
+                
+                // Create download link
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.setAttribute('href', url);
+                link.setAttribute('download', 'fat-loss-tracker-data.csv');
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            });
+            
+            // Clear all data
+            clearAllBtn.addEventListener('click', function() {
+                if (confirm('Are you sure you want to delete all logs? This cannot be undone.')) {
+                    localStorage.removeItem('fatLossLogs');
+                    updateLogsDisplay();
+                    updateDashboard();
+                    updateWeightChart();
+                }
+            });
+            
+            // Chart time period buttons
+            weekBtn.addEventListener('click', function() {
+                chartDaysToShow = 7;
+                weekBtn.classList.add('bg-blue-600', 'text-white');
+                weekBtn.classList.remove('bg-blue-100', 'text-blue-700');
+                monthBtn.classList.add('bg-blue-100', 'text-blue-700');
+                monthBtn.classList.remove('bg-blue-600', 'text-white');
+                updateWeightChart();
+            });
+            
+            monthBtn.addEventListener('click', function() {
+                chartDaysToShow = 30;
+                monthBtn.classList.add('bg-blue-600', 'text-white');
+                monthBtn.classList.remove('bg-blue-100', 'text-blue-700');
+                weekBtn.classList.add('bg-blue-100', 'text-blue-700');
+                weekBtn.classList.remove('bg-blue-600', 'text-white');
+                updateWeightChart();
+            });
+            
+            // Initialize the app
+            updateLogsDisplay();
+            updateDashboard();
+            updateWeightChart();
+        });
+    </script>
+</body>
+</html>
